@@ -80,16 +80,22 @@ describe('Limpeza - Atendentes criados pelos testes E2E', () => {
     return linhaAtendenteE2E || null;
   }
 
-  function clicarExcluirNaLinha(linha: HTMLElement) {
+ function clicarExcluirNaLinha(linha: HTMLElement) {
   const $linha = Cypress.$(linha);
 
-  // 1️⃣ clicar no botão de 3 pontos (menu)
+  // 1️⃣ abrir menu (3 pontos)
   const botaoMenu = $linha
     .find('button:visible, [role="button"]:visible, .q-btn:visible')
     .toArray()
     .find((el) => {
-      const html = el.outerHTML || '';
-      return /more_vert|more_horiz|ellipsis|three/i.test(html);
+      const html = (el.outerHTML || '').toLowerCase();
+
+      return (
+        html.includes('more_vert') ||
+        html.includes('more_horiz') ||
+        html.includes('ellipsis') ||
+        html.includes('three')
+      );
     });
 
   if (!botaoMenu) {
@@ -99,29 +105,37 @@ describe('Limpeza - Atendentes criados pelos testes E2E', () => {
 
   cy.wrap(botaoMenu)
     .scrollIntoView()
+    .should('be.visible')
     .click({ force: true });
 
-  cy.wait(500);
+  // 2️⃣ esperar menu aparecer (SEM wait)
+  cy.get('body').should(($body) => {
+    const existeMenu = $body.find(
+      '[role="menu"]:visible, .q-menu:visible, .q-list:visible'
+    ).length > 0;
 
-  // 2️⃣ clicar em excluir dentro do menu aberto
-  cy.get('body').then(($body) => {
-    const opcoes = $body
-      .find('button:visible, [role="menuitem"]:visible, .q-item:visible')
-      .toArray();
-
-    const opcaoExcluir = opcoes.find((el) => {
-      const texto = (Cypress.$(el).text() || '').toLowerCase();
-
-      return /excluir|eliminar|apagar|delete|remover/.test(texto);
-    });
-
-    if (!opcaoExcluir) {
-      cy.screenshot('opcao-excluir-nao-encontrada');
-      throw new Error('Opção de excluir não encontrada no menu.');
-    }
-
-    cy.wrap(opcaoExcluir).click({ force: true });
+    expect(existeMenu, 'menu aberto na tela').to.eq(true);
   });
+
+  // 3️⃣ clicar em excluir (mais inteligente)
+  cy.get('body')
+    .find('button:visible, [role="menuitem"]:visible, .q-item:visible')
+    .filter((i, el) => {
+      const texto = (Cypress.$(el).text() || '').toLowerCase();
+      const html = (el.outerHTML || '').toLowerCase();
+
+      return (
+        texto.includes('excluir') ||
+        texto.includes('eliminar') ||
+        texto.includes('apagar') ||
+        texto.includes('delete') ||
+        texto.includes('remover') ||
+        html.includes('delete') // fallback 🔥
+      );
+    })
+    .first()
+    .should('be.visible')
+    .click({ force: true });
 }
 
   function confirmarExclusaoSeAparecer() {
