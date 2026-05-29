@@ -25,13 +25,22 @@ describe('Atendentes - Validações', () => {
     cy.url().should('include', '/service-providers/create');
   }
 
-  function preencherInput(index: number, valor: string) {
-    cy.get('input:visible')
-      .eq(index)
-      .should('be.visible')
-      .click({ force: true })
-      .type(`{selectall}{backspace}${valor}`, { force: true });
-  }
+ function preencherInput(index: number, valor: string): void {
+  cy.get('input:visible')
+    .eq(index)
+    .should('be.visible')
+    .click({ force: true });
+
+  // limpa via teclado (não dispara o mesmo re-render agressivo)
+  cy.get('input:visible')
+    .eq(index)
+    .type('{selectall}{backspace}', { force: true });
+
+  // re-busca o elemento antes de digitar
+  cy.get('input:visible')
+    .eq(index)
+    .type(valor, { force: true, delay: 10 });
+}
 
   function clicarGravar() {
     cy.contains(/Gravar/i, { timeout: 30000 })
@@ -166,10 +175,12 @@ describe('Atendentes - Validações', () => {
   let statusCriacao: number | undefined;
 
   cy.intercept('POST', '**/users*', (req) => {
-    req.continue((res) => {
-      statusCriacao = res.statusCode;
-    });
-  }).as('criarAtendente');
+  console.log('BODY ENVIADO:', req.body);
+
+  req.continue((res) => {
+    console.log('STATUS:', res.statusCode);
+  });
+}).as('criarAtendente');
 
   preencherInput(0, `Atendente Comissão Serviço ${timestamp}`);
 
@@ -185,7 +196,9 @@ describe('Atendentes - Validações', () => {
 
   clicarGravar();
 
-  cy.wait(1500);
+  cy.wait('@criarAtendente')
+  .its('response.statusCode')
+  .should('not.eq', 201);
 
   cy.then(() => {
     expect(

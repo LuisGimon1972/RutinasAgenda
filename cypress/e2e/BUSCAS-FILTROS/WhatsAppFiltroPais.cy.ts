@@ -35,12 +35,12 @@ describe('Configurações - WhatsApp - Filtro de países', () => {
     .invoke('text')
     .should(
       'match',
-      /Conexão do WhatsApp|Conexión de WhatsApp|Reconectar WhatsApp|Reconnect WhatsApp|WhatsApp/i
+      /Conexão do WhatsApp|Conexión de WhatsApp|Conectar WhatsApp|Reconectar WhatsApp|Reconnect WhatsApp|WhatsApp/i
     );
 
   cy.contains(
     'button, .q-btn, .p-button, [role="button"]',
-    /Reconectar WhatsApp|Reconnect WhatsApp/i,
+    /Reconectar WhatsApp|Conectar WhatsApp|Reconnect WhatsApp/i,
     { timeout: 30000 }
   )
     .should('be.visible')

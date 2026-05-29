@@ -28,12 +28,15 @@ describe('Atendentes - Editar atendente aleatório da lista', () => {
         cy.log(`Atendente selecionado: ${nomeAtendente}`);
 
         cy.wrap(linhaSelecionada).within(() => {
-          cy.get('td')
-            .last()
-            .find('i, button, svg, [role="button"], .q-icon')
-            .eq(2)
-            .click({ force: true });
-        });
+  cy.get('td:last-child')
+    .find('[aria-label], button, .q-btn')
+    .first() // normalmente o menu
+    .click({ force: true });
+});
+
+cy.contains(/Editar atendente/i)
+  .should('be.visible')
+  .click({ force: true });
       });
 
     cy.get('body', { timeout: 30000 })

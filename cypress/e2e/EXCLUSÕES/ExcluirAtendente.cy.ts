@@ -1,12 +1,14 @@
-describe('Clientes - Editar atendente aleatório da lista', () => {
+describe('Clientes - Excluir atendente aleatório da lista', () => {
   beforeEach(() => {
     cy.login();
 
+    // Fecha cookies se aparecer
     cy.get('body').then(($body) => {
       if ($body.text().includes('Entendi')) {
         cy.contains('Entendi').click({ force: true });
       }
     });
+
 
     cy.contains(/Atendentes/i, { timeout: 30000 })
       .scrollIntoView()
@@ -16,25 +18,34 @@ describe('Clientes - Editar atendente aleatório da lista', () => {
       .should('be.visible');
   });
 
-  it('Deve selecionar aleatoriamente um atendente da lista e abrir dialogo de excluir', () => {
+  it('Deve selecionar um atendente aleatório e abrir o modal de exclusão', () => {
     cy.get('tbody tr', { timeout: 30000 })
       .should('have.length.greaterThan', 0)
       .then(($linhas) => {
-        const totalLinhas = $linhas.length;
-        const indiceAleatorio = Math.floor(Math.random() * totalLinhas);
-        const linhaSelecionada = $linhas.eq(indiceAleatorio);
-        const nomeCliente = linhaSelecionada.find('td').eq(0).text().trim();
+        const total = $linhas.length;
+        const index = Math.floor(Math.random() * total);
+        const linha = $linhas.eq(index);
 
-        cy.log(`Cliente selecionado: ${nomeCliente}`);
+        const nome = linha.find('td').eq(0).text().trim();
+        cy.log(`Atendente selecionado: ${nome}`);
 
-        cy.wrap(linhaSelecionada)
-          .as('linhaClienteSelecionada');
+        cy.wrap(linha).as('linhaSelecionada');
       });
 
-    cy.get('@linhaClienteSelecionada')
+
+    cy.get('@linhaSelecionada')
       .within(() => {
-        cy.contains(/delete/i)
+        cy.get('button')
+          .last() // geralmente o menu é o último botão da linha
           .click({ force: true });
-      });    
+      });
+
+    // 👇 PASSO 2: clicar em excluir
+    cy.contains('Excluir atendente', { timeout: 10000 })
+      .should('be.visible')
+      .click({ force: true });
+
+   
+    cy.contains('Confirmar', { timeout: 10000 }).should('be.visible');
   });
 });
