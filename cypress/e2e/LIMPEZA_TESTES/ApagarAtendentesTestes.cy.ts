@@ -39,21 +39,21 @@ describe('Limpeza - Atendentes criados pelos testes E2E', () => {
   }
 
   function buscarAtendentesE2E() {
-    cy.get('body').then(($body) => {
-      const inputs = $body.find('input:visible');
+  cy.get('body').then(($body) => {
+    const inputs = $body.find('input:visible');
 
-      if (inputs.length === 0) {
-        cy.log('Campo de busca não encontrado. Continuando com a grade atual.');
-        return;
-      }
+    if (inputs.length === 0) {
+      cy.log('Campo de busca não encontrado. Continuando com a grade atual.');
+      return;
+    }
 
-      cy.wrap(inputs.first())
-        .click({ force: true })
-        .type('{selectall}{backspace}E2E', { force: true });
+    cy.wrap(inputs.first())
+      .click({ force: true })
+      .type('{selectall}{backspace}Atendente', { force: true });
 
-      cy.wait(1500);
-    });
-  }
+    cy.wait(1000);
+  });
+}
 
   function obterPrimeiraLinhaAtendenteE2E($body: JQuery<HTMLElement>) {
     const linhas = $body.find('tbody tr:visible').toArray();
@@ -171,33 +171,56 @@ describe('Limpeza - Atendentes criados pelos testes E2E', () => {
   }
 
   function apagarAtendentesE2E(tentativa = 1) {
-    if (tentativa > 100) {
-      throw new Error(
-        'Limite de 100 tentativas atingido ao apagar atendentes E2E.'
-      );
+  const regex = /(^E2E\b|Atendente)/i;
+
+  if (tentativa > 100) {
+    throw new Error(
+      'Limite de 100 tentativas atingido ao apagar atendentes E2E/Atendente.'
+    );
+  }
+
+  cy.get('body', { timeout: 30000 }).then(($body) => {
+    // 🔥 NOVO: encontra qualquer linha que bata com a regra
+    const linhas = $body.find('tbody tr:visible').toArray();
+
+    const linhaAlvo = linhas.find((linha) => {
+      const $linha = Cypress.$(linha);
+      const colunas = $linha.find('td');
+
+      if (!colunas.length) return false;
+
+      const nome = limparTexto(colunas.eq(0).text());
+      const textoLinha = limparTexto($linha.text());
+
+      const naoEhLinhaVazia =
+        !/nenhum|no hay|sin registros|no encontrado|nenhum atendente|nenhum profissional/i.test(
+          textoLinha
+        );
+
+      return naoEhLinhaVazia && regex.test(nome);
+    });
+
+    // 🔚 acabou
+    if (!linhaAlvo) {
+      cy.log('✅ Nenhum atendente E2E/Atendente restante.');
+      return;
     }
 
-    cy.get('body', { timeout: 30000 }).then(($body) => {
-      const linhaAtendenteE2E = obterPrimeiraLinhaAtendenteE2E($body);
+    const nome = limparTexto(Cypress.$(linhaAlvo).find('td').eq(0).text());
 
-      if (!linhaAtendenteE2E) {
-        cy.log('Nenhum atendente E2E encontrado. Limpeza finalizada sem erro.');
-        return;
-      }
+    cy.log(`🗑️ Apagando (${tentativa}): ${nome}`);
 
-      const textoAtendente = limparTexto(Cypress.$(linhaAtendenteE2E).text());
+    clicarExcluirNaLinha(linhaAlvo);
 
-      cy.log(`Apagando atendente E2E ${tentativa}: ${textoAtendente}`);
+    confirmarExclusaoSeAparecer();
 
-      clicarExcluirNaLinha(linhaAtendenteE2E);
+    // 🔥 IMPORTANTE: pequena espera pra evitar pegar DOM velho
+    cy.wait(800);
 
-      confirmarExclusaoSeAparecer();
-
-      buscarAtendentesE2E();
-
-      apagarAtendentesE2E(tentativa + 1);
-    });
-  }
+    // 🔁 recursão
+    apagarAtendentesE2E(tentativa + 1);
+  });
+}
 
   function validarNenhumAtendenteE2E() {
     buscarAtendentesE2E();
@@ -228,11 +251,18 @@ describe('Limpeza - Atendentes criados pelos testes E2E', () => {
     abrirAtendentes();
   });
 
-  it('Deve apagar todos os atendentes criados pelos testes E2E.', () => {
-    buscarAtendentesE2E();
+  it('Deve apagar todos os atendentes E2E e Atendente', () => {
+  // 🔹 Primeiro limpa E2E
+  buscarAtendentesE2E();
+  apagarAtendentesE2E();
 
-    apagarAtendentesE2E();
+  // 🔹 Depois limpa Atendente
+  cy.get('input:visible').first()
+    .type('{selectall}{backspace}Atendente', { force: true });
 
-    validarNenhumAtendenteE2E();
-  });
+  apagarAtendentesE2E();
+
+  // 🔹 Validação final
+  validarNenhumAtendenteE2E();
+});
 });
