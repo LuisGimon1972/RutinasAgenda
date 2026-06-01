@@ -231,7 +231,7 @@ describe('Agendamentos - Validações', () => {
             .replace(/\s+/g, ' ')
             .trim();
 
-          return /Gravar|Salvar|Guardar/i.test(texto);
+          return /Gravar|Agendar|Salvar|Guardar/i.test(texto);
         }) as HTMLElement[];
 
       if (botoesGravar.length === 0) {
@@ -331,7 +331,7 @@ describe('Agendamentos - Validações', () => {
       .scrollIntoView()
       .should('be.visible');
 
-    cy.contains(/Gravar|Salvar|Guardar/i, { timeout: 30000 })
+    cy.contains(/Gravar|Salvar|Agendar|Guardar/i, { timeout: 30000 })
       .scrollIntoView()
       .should('be.visible')
       .click({ force: true });
