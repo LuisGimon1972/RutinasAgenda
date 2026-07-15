@@ -97,7 +97,7 @@ describe('Categorias - Busca', () => {
     fecharCookiesSeAparecer();
     abrirCategorias();
   });
-
+  cy.wait(1500);
   it('Deve buscar primeiro uma categoria existente e depois uma inexistente.', () => {
   obterCategoriaExistenteDaGrade().then((nomeCategoriaExistente) => {
     if (!nomeCategoriaExistente) {

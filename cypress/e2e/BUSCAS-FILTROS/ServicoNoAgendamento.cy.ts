@@ -94,6 +94,7 @@ describe('Agendamentos - Busca de serviços no cadastro', () => {
   }
 
   function buscarServico(texto: string) {
+
     campoBuscaServico()
       .should('be.visible')
       .click({ force: true });
